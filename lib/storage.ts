@@ -36,7 +36,14 @@ export interface ShareRequest {
 }
 
 export class StorageService {
-  private static supabase = createClient()
+  private static _supabase: ReturnType<typeof createClient> | null = null
+
+  private static get supabase() {
+    if (!this._supabase) {
+      this._supabase = createClient()
+    }
+    return this._supabase
+  }
 
   private static async deriveEncryptionKey(password: string, salt: string): Promise<CryptoKey> {
     const encoder = new TextEncoder()
@@ -201,13 +208,20 @@ export class StorageService {
   // Patient records
   static async getPatientRecords(patientId: string): Promise<PatientRecord[]> {
     try {
+      console.log("[v0] Getting patient records for:", patientId)
+
       const { data, error } = await this.supabase
         .from("patient_records")
         .select("*")
         .eq("patient_id", patientId)
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.log("[v0] Supabase error:", error)
+        throw error
+      }
+
+      console.log("[v0] Retrieved records:", data?.length || 0)
 
       return data.map((record) => ({
         id: record.id,
@@ -221,13 +235,15 @@ export class StorageService {
         sharedWith: [], // Will be populated from share_requests
       }))
     } catch (error) {
-      console.error("Error getting patient records:", error)
+      console.error("[v0] Error getting patient records:", error)
       return []
     }
   }
 
   static async savePatientRecord(record: Omit<PatientRecord, "id" | "uploadedAt">): Promise<PatientRecord | null> {
     try {
+      console.log("[v0] Saving patient record:", record.fileName)
+
       const { data, error } = await this.supabase
         .from("patient_records")
         .insert({
@@ -241,7 +257,12 @@ export class StorageService {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.log("[v0] Supabase insert error:", error)
+        throw error
+      }
+
+      console.log("[v0] Record saved successfully:", data.id)
 
       return {
         id: data.id,
@@ -255,7 +276,7 @@ export class StorageService {
         sharedWith: [],
       }
     } catch (error) {
-      console.error("Error saving patient record:", error)
+      console.error("[v0] Error saving patient record:", error)
       return null
     }
   }
@@ -355,7 +376,7 @@ export class StorageService {
         patientName: share.users.name,
       }))
     } catch (error) {
-      // console.error("Error getting shared records:", error)
+      console.error("Error getting shared records:", error)
       return []
     }
   }
