@@ -37,25 +37,27 @@ export function AuditLogViewer({ user }: AuditLogViewerProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadAuditLogs()
-  }, [user.id, filter])
+    // Use an async function inside useEffect to handle the async call
+    const fetchLogs = async () => {
+      setLoading(true)
+      try {
+        const filters: any = { userId: user.id, limit: 50 }
+        if (filter !== "all") {
+          filters.action = filter
+        }
 
-  const loadAuditLogs = () => {
-    setLoading(true)
-    try {
-      const filters: any = { userId: user.id, limit: 50 }
-      if (filter !== "all") {
-        filters.action = filter
+        const auditLogs = await AuditService.getAuditLogs(filters)
+        // Defensive: ensure auditLogs is always an array
+        setLogs(Array.isArray(auditLogs) ? auditLogs : [])
+      } catch (error) {
+        console.error("Failed to load audit logs:", error)
+        setLogs([])
+      } finally {
+        setLoading(false)
       }
-
-      const auditLogs = AuditService.getAuditLogs(filters)
-      setLogs(auditLogs)
-    } catch (error) {
-      console.error("Failed to load audit logs:", error)
-    } finally {
-      setLoading(false)
     }
-  }
+    fetchLogs()
+  }, [user.id, filter])
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp)
@@ -113,7 +115,7 @@ export function AuditLogViewer({ user }: AuditLogViewerProps) {
         ) : (
           <ScrollArea className="h-96">
             <div className="space-y-3">
-              {logs.map((log) => (
+              {Array.isArray(logs) && logs.map((log) => (
                 <div key={log.id} className="flex items-start space-x-3 p-3 border border-border rounded-lg">
                   <div className={`p-2 rounded-full ${getActionColor(log.action)}`}>{getActionIcon(log.action)}</div>
                   <div className="flex-1 min-w-0">

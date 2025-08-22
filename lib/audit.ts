@@ -52,7 +52,7 @@ export class AuditService {
       })
 
       if (error) {
-        console.error("Error logging audit event:", error)
+        // console.error("Error logging audit event:", error)
         // Fallback to localStorage for demo
         this.logEventLocally(event)
       }

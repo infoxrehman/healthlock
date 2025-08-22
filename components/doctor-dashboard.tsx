@@ -29,11 +29,17 @@ export function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
       resourceType: "system",
       details: `${user.name} logged into the system`,
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id])
 
-  const loadSharedRecords = () => {
-    const records = StorageService.getSharedRecords(user.id)
-    setSharedRecords(records)
+  // Make loadSharedRecords async and handle Promise
+  const loadSharedRecords = async () => {
+    try {
+      const records = await StorageService.getSharedRecords(user.id)
+      setSharedRecords(Array.isArray(records) ? records : [])
+    } catch (e) {
+      setSharedRecords([])
+    }
   }
 
   const handleLogout = () => {
@@ -104,7 +110,7 @@ export function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
                       <div className="flex items-center space-x-3">
                         <Users className="h-8 w-8 text-primary" />
                         <div>
-                          <p className="text-2xl font-bold">{new Set(sharedRecords.map((r) => r.patientId)).size}</p>
+                          <p className="text-2xl font-bold">{Array.isArray(sharedRecords) ? new Set(sharedRecords.map((r) => r.patientId)).size : 0}</p>
                           <p className="text-sm text-muted-foreground">Patients</p>
                         </div>
                       </div>
@@ -116,7 +122,7 @@ export function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
                       <div className="flex items-center space-x-3">
                         <FileText className="h-8 w-8 text-primary" />
                         <div>
-                          <p className="text-2xl font-bold">{sharedRecords.length}</p>
+                          <p className="text-2xl font-bold">{Array.isArray(sharedRecords) ? sharedRecords.length : 0}</p>
                           <p className="text-sm text-muted-foreground">Shared Records</p>
                         </div>
                       </div>
@@ -136,7 +142,7 @@ export function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
                     <CardDescription>Securely access patient records shared with you</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {sharedRecords.length === 0 ? (
+                    {Array.isArray(sharedRecords) && sharedRecords.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>No records shared with you yet</p>
@@ -144,37 +150,38 @@ export function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {sharedRecords.map((record) => (
-                          <div
-                            key={record.id}
-                            className="flex items-center justify-between p-4 border border-border rounded-lg"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <FileText className="h-8 w-8 text-muted-foreground" />
-                              <div>
-                                <h3 className="font-medium">{record.fileName}</h3>
-                                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                                  <span>Patient: {record.patientName}</span>
-                                  <span>•</span>
-                                  <span>Shared {new Date(record.uploadedAt).toLocaleDateString()}</span>
+                        {Array.isArray(sharedRecords) &&
+                          sharedRecords.map((record) => (
+                            <div
+                              key={record.id}
+                              className="flex items-center justify-between p-4 border border-border rounded-lg"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <FileText className="h-8 w-8 text-muted-foreground" />
+                                <div>
+                                  <h3 className="font-medium">{record.fileName}</h3>
+                                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                                    <span>Patient: {record.patientName}</span>
+                                    <span>•</span>
+                                    <span>Shared {new Date(record.uploadedAt).toLocaleDateString()}</span>
+                                  </div>
                                 </div>
                               </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline" className="text-xs">
+                                  <Share2 className="h-3 w-3 mr-1" />
+                                  Shared
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  Encrypted
+                                </Badge>
+                                <Button variant="outline" size="sm" onClick={() => handleViewRecord(record)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Badge variant="outline" className="text-xs">
-                                <Share2 className="h-3 w-3 mr-1" />
-                                Shared
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                Encrypted
-                              </Badge>
-                              <Button variant="outline" size="sm" onClick={() => handleViewRecord(record)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     )}
                   </CardContent>

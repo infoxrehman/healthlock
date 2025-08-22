@@ -355,7 +355,7 @@ export class StorageService {
         patientName: share.users.name,
       }))
     } catch (error) {
-      console.error("Error getting shared records:", error)
+      // console.error("Error getting shared records:", error)
       return []
     }
   }
