@@ -18,7 +18,6 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "HealthLock - Secure Patient Records",
   description: "Secure patient record sharing platform with end-to-end encryption",
-  generator: "v0.app",
 }
 
 export default function RootLayout({

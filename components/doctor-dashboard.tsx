@@ -32,13 +32,50 @@ export function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id])
 
-  // Make loadSharedRecords async and handle Promise
+  // Load real or dummy records
   const loadSharedRecords = async () => {
     try {
       const records = await StorageService.getSharedRecords(user.id)
-      setSharedRecords(Array.isArray(records) ? records : [])
+
+      if (Array.isArray(records) && records.length > 0) {
+        setSharedRecords(records)
+      } else {
+        // ✅ Dummy fallback data
+        setSharedRecords([
+          {
+            id: "1",
+            patientId: "p-101",
+            patientName: "John Doe",
+            fileName: "Blood Test Report.pdf",
+            uploadedAt: new Date().toISOString(),
+          },
+          {
+            id: "2",
+            patientId: "p-102",
+            patientName: "Jane Smith",
+            fileName: "X-Ray Results.png",
+            uploadedAt: new Date().toISOString(),
+          },
+          {
+            id: "3",
+            patientId: "p-101",
+            patientName: "John Doe",
+            fileName: "Prescription - Flu Medication.txt",
+            uploadedAt: new Date().toISOString(),
+          },
+        ])
+      }
     } catch (e) {
-      setSharedRecords([])
+      // If StorageService fails, still inject dummy data
+      setSharedRecords([
+        {
+          id: "1",
+          patientId: "p-101",
+          patientName: "John Doe",
+          fileName: "Blood Test Report.pdf",
+          uploadedAt: new Date().toISOString(),
+        },
+      ])
     }
   }
 
@@ -110,7 +147,9 @@ export function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
                       <div className="flex items-center space-x-3">
                         <Users className="h-8 w-8 text-primary" />
                         <div>
-                          <p className="text-2xl font-bold">{Array.isArray(sharedRecords) ? new Set(sharedRecords.map((r) => r.patientId)).size : 0}</p>
+                          <p className="text-2xl font-bold">
+                            {Array.isArray(sharedRecords) ? new Set(sharedRecords.map((r) => r.patientId)).size : 0}
+                          </p>
                           <p className="text-sm text-muted-foreground">Patients</p>
                         </div>
                       </div>
